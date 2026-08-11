@@ -16,9 +16,89 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
+import androidx.compose.ui.platform.LocalContext
+import com.rituraj.motonav.location.MotoLocationManager
 
 @Composable
 fun NavigationScreen() {
+
+    val context = LocalContext.current
+
+    var latitude by remember {
+        mutableStateOf<Double?>(null)
+    }
+
+    var longitude by remember {
+        mutableStateOf<Double?>(null)
+    }
+
+    val locationManager = remember {
+        MotoLocationManager(context)
+    }
+
+    val locationPermissionLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+
+            val fineLocationGranted =
+                permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+
+            val coarseLocationGranted =
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+
+            if (fineLocationGranted || coarseLocationGranted) {
+
+                locationManager.startLocationUpdates { lat, lon ->
+
+                    latitude = lat
+                    longitude = lon
+                }
+            }
+        }
+
+    LaunchedEffect(Unit) {
+
+        val fineLocationGranted =
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        val coarseLocationGranted =
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+        if (fineLocationGranted || coarseLocationGranted) {
+
+            locationManager.startLocationUpdates { lat, lon ->
+
+                latitude = lat
+                longitude = lon
+            }
+
+        } else {
+
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -40,11 +120,29 @@ fun NavigationScreen() {
                 .background(Color.DarkGray),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "MAP",
-                color = Color.White,
-                fontSize = 24.sp
-            )
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                Text(
+                    text = "MAP",
+                    color = Color.White,
+                    fontSize = 24.sp
+                )
+
+                Text(
+                    text = "Latitude: ${latitude ?: "Waiting..."}",
+                    color = Color.White,
+                    fontSize = 14.sp
+                )
+
+                Text(
+                    text = "Longitude: ${longitude ?: "Waiting..."}",
+                    color = Color.White,
+                    fontSize = 14.sp
+                )
+            }
         }
 
         Row(
@@ -58,7 +156,11 @@ fun NavigationScreen() {
         ) {
 
             Text(
-                text = "GPS: Ready",
+                text = if (latitude != null) {
+                    "GPS: Connected"
+                } else {
+                    "GPS: Waiting"
+                },
                 color = Color.White,
                 fontSize = 14.sp
             )
