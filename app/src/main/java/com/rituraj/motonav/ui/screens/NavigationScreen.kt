@@ -89,6 +89,8 @@ fun NavigationScreen() {
         ) {
 
             MotoMap(
+                latitude = latitude,
+                longitude = longitude,
                 modifier = Modifier.fillMaxSize()
             )
         }
