@@ -1,5 +1,7 @@
 package com.rituraj.motonav.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,24 +13,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
-import androidx.compose.ui.platform.LocalContext
 import com.rituraj.motonav.location.MotoLocationManager
-import com.rituraj.motonav.ui.screens.MotoMap
 
 @Composable
 fun NavigationScreen() {
@@ -47,57 +45,27 @@ fun NavigationScreen() {
         MotoLocationManager(context)
     }
 
-    val locationPermissionLauncher =
-        rememberLauncherForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()
-        ) { permissions ->
-
-            val fineLocationGranted =
-                permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
-
-            val coarseLocationGranted =
-                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-
-            if (fineLocationGranted || coarseLocationGranted) {
-
-                locationManager.startLocationUpdates { lat, lon ->
-
-                    latitude = lat
-                    longitude = lon
-                }
-            }
+    DisposableEffect(Unit) {
+        onDispose {
+            locationManager.stopLocationUpdates()
         }
+    }
 
-    LaunchedEffect(Unit) {
+    val hasLocationPermission =
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
 
-        val fineLocationGranted =
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
+    LaunchedEffect(hasLocationPermission) {
 
-        val coarseLocationGranted =
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-
-        if (fineLocationGranted || coarseLocationGranted) {
+        if (hasLocationPermission) {
 
             locationManager.startLocationUpdates { lat, lon ->
 
                 latitude = lat
                 longitude = lon
             }
-
-        } else {
-
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
         }
     }
 
@@ -128,22 +96,38 @@ fun NavigationScreen() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
+                .height(70.dp)
                 .background(Color.Black)
                 .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            Text(
-                text = if (latitude != null) {
-                    "GPS: Connected"
-                } else {
-                    "GPS: Waiting"
-                },
-                color = Color.White,
-                fontSize = 14.sp
-            )
+            if (latitude != null && longitude != null) {
+
+                Column {
+
+                    Text(
+                        text = "LAT: %.6f".format(latitude),
+                        color = Color.White,
+                        fontSize = 13.sp
+                    )
+
+                    Text(
+                        text = "LON: %.6f".format(longitude),
+                        color = Color.White,
+                        fontSize = 13.sp
+                    )
+                }
+
+            } else {
+
+                Text(
+                    text = "GPS: Waiting...",
+                    color = Color.White,
+                    fontSize = 14.sp
+                )
+            }
 
             Text(
                 text = "BLE: Disconnected",
