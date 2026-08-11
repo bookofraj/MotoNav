@@ -8,6 +8,11 @@ import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
+import org.maplibre.android.style.layers.CircleLayer
+import org.maplibre.android.style.sources.GeoJsonSource
+import org.maplibre.geojson.Feature
+import org.maplibre.geojson.Point
+import org.maplibre.android.style.layers.PropertyFactory
 
 @Composable
 fun MotoMap(
@@ -15,6 +20,7 @@ fun MotoMap(
     longitude: Double?,
     modifier: Modifier = Modifier
 ) {
+
     val mapReference = remember {
         mutableMapOf<String, MapLibreMap>()
     }
@@ -34,7 +40,33 @@ fun MotoMap(
 
                     map.setStyle(
                         "https://demotiles.maplibre.org/style.json"
-                    )
+                    ) { style ->
+
+                        // Source containing our current position
+                        val locationSource = GeoJsonSource(
+                            "current-location-source",
+                            Feature.fromGeometry(
+                                Point.fromLngLat(0.0, 0.0)
+                            )
+                        )
+
+                        style.addSource(locationSource)
+
+                        // Small circle representing the rider
+                        val locationLayer = CircleLayer(
+                            "current-location-layer",
+                            "current-location-source"
+                        )
+
+                        locationLayer.setProperties(
+                            PropertyFactory.circleRadius(6f),
+                            PropertyFactory.circleColor("#000000"),
+                            PropertyFactory.circleStrokeWidth(2f),
+                            PropertyFactory.circleStrokeColor("#FFFFFF")
+                        )
+
+                        style.addLayer(locationLayer)
+                    }
                 }
             }
         },
@@ -45,9 +77,32 @@ fun MotoMap(
 
             if (map != null && latitude != null && longitude != null) {
 
+                val currentLocation = LatLng(
+                    latitude,
+                    longitude
+                )
+
+                // Move camera to current GPS position
                 map.animateCamera(
                     CameraUpdateFactory.newLatLng(
-                        LatLng(latitude, longitude)
+                        currentLocation
+                    )
+                )
+
+                // Update marker position
+                val style = map.style
+
+                val source =
+                    style?.getSourceAs<GeoJsonSource>(
+                        "current-location-source"
+                    )
+
+                source?.setGeoJson(
+                    Feature.fromGeometry(
+                        Point.fromLngLat(
+                            longitude,
+                            latitude
+                        )
                     )
                 )
             }
