@@ -1,4 +1,4 @@
-package com.rituraj.motonav.ui
+package com.rituraj.motonav.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.LocalContext
 import com.rituraj.motonav.location.MotoLocationManager
+import com.rituraj.motonav.ui.screens.MotoMap
 
 @Composable
 fun NavigationScreen() {
@@ -117,32 +118,11 @@ fun NavigationScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .background(Color.DarkGray),
-            contentAlignment = Alignment.Center
         ) {
 
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-
-                Text(
-                    text = "MAP",
-                    color = Color.White,
-                    fontSize = 24.sp
-                )
-
-                Text(
-                    text = "Latitude: ${latitude ?: "Waiting..."}",
-                    color = Color.White,
-                    fontSize = 14.sp
-                )
-
-                Text(
-                    text = "Longitude: ${longitude ?: "Waiting..."}",
-                    color = Color.White,
-                    fontSize = 14.sp
-                )
-            }
+            MotoMap(
+                modifier = Modifier.fillMaxSize()
+            )
         }
 
         Row(
