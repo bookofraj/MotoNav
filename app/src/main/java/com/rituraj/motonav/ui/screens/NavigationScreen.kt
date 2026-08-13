@@ -48,6 +48,10 @@ fun NavigationScreen() {
         MotoLocationManager(context)
     }
 
+    var routePoints by remember {
+        mutableStateOf<List<Pair<Double, Double>>>(emptyList())
+    }
+
     val osrmRouter = remember {
         OsrmRouter()
     }
@@ -75,11 +79,11 @@ fun NavigationScreen() {
                     val route = osrmRouter.getRoute(
                         startLatitude = latitude!!,
                         startLongitude = longitude!!,
-
-                        // Temporary destination
                         destinationLatitude = latitude!! + 0.01,
                         destinationLongitude = longitude!! + 0.01
                     )
+
+                    routePoints = route
 
                     println(
                         "OSRM ROUTE POINTS: ${route.size}"
@@ -141,6 +145,7 @@ fun NavigationScreen() {
             MotoMap(
                 latitude = latitude,
                 longitude = longitude,
+                routePoints = routePoints,
                 modifier = Modifier.fillMaxSize()
             )
         }

@@ -9,15 +9,18 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.style.layers.CircleLayer
+import org.maplibre.android.style.layers.LineLayer
+import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.geojson.Feature
+import org.maplibre.geojson.LineString
 import org.maplibre.geojson.Point
-import org.maplibre.android.style.layers.PropertyFactory
 
 @Composable
 fun MotoMap(
     latitude: Double?,
     longitude: Double?,
+    routePoints: List<Pair<Double, Double>>,
     modifier: Modifier = Modifier
 ) {
 
@@ -42,7 +45,10 @@ fun MotoMap(
                         "https://tiles.openfreemap.org/styles/liberty"
                     ) { style ->
 
-                        // Source containing our current position
+                        // --------------------------------------------------
+                        // CURRENT LOCATION
+                        // --------------------------------------------------
+
                         val locationSource = GeoJsonSource(
                             "current-location-source",
                             Feature.fromGeometry(
@@ -52,7 +58,6 @@ fun MotoMap(
 
                         style.addSource(locationSource)
 
-                        // Small circle representing the rider
                         val locationLayer = CircleLayer(
                             "current-location-layer",
                             "current-location-source"
@@ -66,6 +71,35 @@ fun MotoMap(
                         )
 
                         style.addLayer(locationLayer)
+
+
+                        // --------------------------------------------------
+                        // ROUTE
+                        // --------------------------------------------------
+
+                        val routeSource = GeoJsonSource(
+                            "route-source",
+                            Feature.fromGeometry(
+                                LineString.fromLngLats(
+                                    emptyList()
+                                )
+                            )
+                        )
+
+                        style.addSource(routeSource)
+
+                        val routeLayer = LineLayer(
+                            "route-layer",
+                            "route-source"
+                        )
+
+                        routeLayer.setProperties(
+                            PropertyFactory.lineColor("#000000"),
+                            PropertyFactory.lineWidth(5f),
+                            PropertyFactory.lineOpacity(0.8f)
+                        )
+
+                        style.addLayer(routeLayer)
                     }
                 }
             }
@@ -75,36 +109,71 @@ fun MotoMap(
 
             val map = mapReference["map"]
 
-            if (map != null && latitude != null && longitude != null) {
+            if (map != null) {
 
-                val currentLocation = LatLng(
-                    latitude,
-                    longitude
-                )
+                // ----------------------------------------------------------
+                // CURRENT LOCATION
+                // ----------------------------------------------------------
 
-                // Move camera to current GPS position
-                map.animateCamera(
-                    CameraUpdateFactory.newLatLng(
-                        currentLocation
-                    )
-                )
+                if (latitude != null && longitude != null) {
 
-                // Update marker position
-                val style = map.style
-
-                val source =
-                    style?.getSourceAs<GeoJsonSource>(
-                        "current-location-source"
+                    val currentLocation = LatLng(
+                        latitude,
+                        longitude
                     )
 
-                source?.setGeoJson(
-                    Feature.fromGeometry(
-                        Point.fromLngLat(
-                            longitude,
-                            latitude
+                    map.animateCamera(
+                        CameraUpdateFactory.newLatLng(
+                            currentLocation
                         )
                     )
-                )
+
+                    val style = map.style
+
+                    val locationSource =
+                        style?.getSourceAs<GeoJsonSource>(
+                            "current-location-source"
+                        )
+
+                    locationSource?.setGeoJson(
+                        Feature.fromGeometry(
+                            Point.fromLngLat(
+                                longitude,
+                                latitude
+                            )
+                        )
+                    )
+                }
+
+
+                // ----------------------------------------------------------
+                // ROUTE
+                // ----------------------------------------------------------
+
+                if (routePoints.isNotEmpty()) {
+
+                    val style = map.style
+
+                    val routeSource =
+                        style?.getSourceAs<GeoJsonSource>(
+                            "route-source"
+                        )
+
+                    val coordinates = routePoints.map {
+                        Point.fromLngLat(
+                            it.second,
+                            it.first
+                        )
+                    }
+
+                    routeSource?.setGeoJson(
+                        Feature.fromGeometry(
+                            LineString.fromLngLats(
+                                coordinates
+                            )
+                        )
+                    )
+                }
             }
         }
     )
