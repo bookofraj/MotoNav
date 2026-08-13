@@ -39,7 +39,7 @@ fun MotoMap(
                     mapReference["map"] = map
 
                     map.setStyle(
-                        "https://demotiles.maplibre.org/style.json"
+                        "https://tiles.openfreemap.org/styles/liberty"
                     ) { style ->
 
                         // Source containing our current position

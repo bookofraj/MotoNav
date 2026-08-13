@@ -27,6 +27,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.rituraj.motonav.location.MotoLocationManager
+import androidx.compose.runtime.rememberCoroutineScope
+import com.rituraj.motonav.routing.OsrmRouter
+import kotlinx.coroutines.launch
 
 @Composable
 fun NavigationScreen() {
@@ -43,6 +46,53 @@ fun NavigationScreen() {
 
     val locationManager = remember {
         MotoLocationManager(context)
+    }
+
+    val osrmRouter = remember {
+        OsrmRouter()
+    }
+
+    val coroutineScope = rememberCoroutineScope()
+
+    var routeRequested by remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(latitude, longitude) {
+
+        if (
+            latitude != null &&
+            longitude != null &&
+            !routeRequested
+        ) {
+
+            routeRequested = true
+
+            coroutineScope.launch {
+
+                try {
+
+                    val route = osrmRouter.getRoute(
+                        startLatitude = latitude!!,
+                        startLongitude = longitude!!,
+
+                        // Temporary destination
+                        destinationLatitude = latitude!! + 0.01,
+                        destinationLongitude = longitude!! + 0.01
+                    )
+
+                    println(
+                        "OSRM ROUTE POINTS: ${route.size}"
+                    )
+
+                } catch (e: Exception) {
+
+                    println(
+                        "OSRM ERROR: ${e.message}"
+                    )
+                }
+            }
+        }
     }
 
     DisposableEffect(Unit) {
