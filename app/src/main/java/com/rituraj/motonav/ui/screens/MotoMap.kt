@@ -15,12 +15,13 @@ import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.LineString
 import org.maplibre.geojson.Point
+import com.rituraj.motonav.routing.RoutePoint
 
 @Composable
 fun MotoMap(
     latitude: Double?,
     longitude: Double?,
-    routePoints: List<Pair<Double, Double>>,
+    routePoints: List<RoutePoint>,
     destinationLatitude: Double?,
     destinationLongitude: Double?,
     onMapTap: (latitude: Double, longitude: Double) -> Unit,
@@ -201,8 +202,8 @@ fun MotoMap(
 
                     val coordinates = routePoints.map {
                         Point.fromLngLat(
-                            it.second,
-                            it.first
+                            it.longitude,
+                            it.latitude
                         )
                     }
 

@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
+import com.rituraj.motonav.routing.RoutePoint
 
 class OsrmRouter {
 
@@ -15,7 +16,7 @@ class OsrmRouter {
         startLongitude: Double,
         destinationLatitude: Double,
         destinationLongitude: Double
-    ): List<Pair<Double, Double>> = withContext(Dispatchers.IO) {
+    ): List<RoutePoint> = withContext(Dispatchers.IO) {
 
         val url =
             "https://router.project-osrm.org/route/v1/driving/" +
@@ -55,7 +56,7 @@ class OsrmRouter {
             val coordinates =
                 geometry.getJSONArray("coordinates")
 
-            val routePoints = mutableListOf<Pair<Double, Double>>()
+            val routePoints = mutableListOf<RoutePoint>()
 
             for (i in 0 until coordinates.length()) {
 
@@ -66,7 +67,10 @@ class OsrmRouter {
                 val latitude = coordinate.getDouble(1)
 
                 routePoints.add(
-                    Pair(latitude, longitude)
+                    RoutePoint(
+                        latitude = latitude,
+                        longitude = longitude
+                    )
                 )
             }
 

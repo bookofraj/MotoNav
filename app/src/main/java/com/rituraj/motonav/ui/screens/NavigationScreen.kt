@@ -30,6 +30,7 @@ import com.rituraj.motonav.location.MotoLocationManager
 import androidx.compose.runtime.rememberCoroutineScope
 import com.rituraj.motonav.routing.OsrmRouter
 import kotlinx.coroutines.launch
+import com.rituraj.motonav.routing.RoutePoint
 
 @Composable
 fun NavigationScreen() {
@@ -49,7 +50,7 @@ fun NavigationScreen() {
     }
 
     var routePoints by remember {
-        mutableStateOf<List<Pair<Double, Double>>>(emptyList())
+        mutableStateOf<List<RoutePoint>>(emptyList())
     }
 
     var destinationLatitude by remember {
