@@ -31,6 +31,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import com.rituraj.motonav.routing.OsrmRouter
 import kotlinx.coroutines.launch
 import com.rituraj.motonav.routing.RoutePoint
+import com.rituraj.motonav.routing.RouteProgress
+import com.rituraj.motonav.routing.RouteTracker
 
 @Composable
 fun NavigationScreen() {
@@ -66,6 +68,10 @@ fun NavigationScreen() {
     }
 
     val coroutineScope = rememberCoroutineScope()
+
+    var routeProgress by remember {
+        mutableStateOf<RouteProgress?>(null)
+    }
 
 //    var routeRequested by remember {
 //        mutableStateOf(false)
@@ -146,6 +152,32 @@ fun NavigationScreen() {
         }
     }
 
+    //Calculate progress whenever GPS moves
+    LaunchedEffect(
+        latitude,
+        longitude,
+        routePoints
+    ) {
+
+        if (
+            latitude != null &&
+            longitude != null &&
+            routePoints.size >= 2
+        ) {
+
+            val currentLocation = RoutePoint(
+                latitude = latitude!!,
+                longitude = longitude!!
+            )
+
+            routeProgress =
+                RouteTracker.calculateProgress(
+                    currentLocation = currentLocation,
+                    route = routePoints
+                )
+        }
+    }
+
     DisposableEffect(Unit) {
         onDispose {
             locationManager.stopLocationUpdates()
@@ -212,13 +244,40 @@ fun NavigationScreen() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(70.dp)
+                .height(120.dp)
                 .background(Color.Black)
                 .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
 
+//            if (latitude != null && longitude != null) {
+//
+//                Column {
+//
+//                    Text(
+//                        text = "LAT: %.6f".format(latitude),
+//                        color = Color.White,
+//                        fontSize = 13.sp
+//                    )
+//
+//                    Text(
+//                        text = "LON: %.6f".format(longitude),
+//                        color = Color.White,
+//                        fontSize = 13.sp
+//                    )
+//                }
+//
+//            } else {
+//
+//                Text(
+//                    text = "GPS: Waiting...",
+//                    color = Color.White,
+//                    fontSize = 14.sp
+//                )
+//            }
+
+            //Temporarily display the progress
             if (latitude != null && longitude != null) {
 
                 Column {
@@ -234,6 +293,33 @@ fun NavigationScreen() {
                         color = Color.White,
                         fontSize = 13.sp
                     )
+
+                    routeProgress?.let { progress ->
+
+                        Text(
+                            text = "ROUTE: %.1f%%".format(
+                                progress.progressPercent
+                            ),
+                            color = Color.White,
+                            fontSize = 13.sp
+                        )
+
+                        Text(
+                            text = "REMAINING: %.0f m".format(
+                                progress.distanceRemainingMeters
+                            ),
+                            color = Color.White,
+                            fontSize = 13.sp
+                        )
+
+                        Text(
+                            text = "OFF ROUTE: %.0f m".format(
+                                progress.distanceFromRouteMeters
+                            ),
+                            color = Color.White,
+                            fontSize = 13.sp
+                        )
+                    }
                 }
 
             } else {
