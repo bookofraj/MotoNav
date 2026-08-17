@@ -21,6 +21,9 @@ fun MotoMap(
     latitude: Double?,
     longitude: Double?,
     routePoints: List<Pair<Double, Double>>,
+    destinationLatitude: Double?,
+    destinationLongitude: Double?,
+    onMapTap: (latitude: Double, longitude: Double) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -40,6 +43,16 @@ fun MotoMap(
                 getMapAsync { map ->
 
                     mapReference["map"] = map
+
+                    map.addOnMapClickListener { point ->
+
+                        onMapTap(
+                            point.latitude,
+                            point.longitude
+                        )
+
+                        true
+                    }
 
                     map.setStyle(
                         "https://tiles.openfreemap.org/styles/liberty"
@@ -100,6 +113,33 @@ fun MotoMap(
                         )
 
                         style.addLayer(routeLayer)
+
+                        //-------------------------
+                        // Destination Location
+                        //-------------------------
+
+                        val destinationSource = GeoJsonSource(
+                            "destination-source",
+                            Feature.fromGeometry(
+                                Point.fromLngLat(0.0, 0.0)
+                            )
+                        )
+
+                        style.addSource(destinationSource)
+
+                        val destinationLayer = CircleLayer(
+                            "destination-layer",
+                            "destination-source"
+                        )
+
+                        destinationLayer.setProperties(
+                            PropertyFactory.circleRadius(7f),
+                            PropertyFactory.circleColor("#FFFFFF"),
+                            PropertyFactory.circleStrokeWidth(2f),
+                            PropertyFactory.circleStrokeColor("#000000")
+                        )
+
+                        style.addLayer(destinationLayer)
                     }
                 }
             }
@@ -170,6 +210,32 @@ fun MotoMap(
                         Feature.fromGeometry(
                             LineString.fromLngLats(
                                 coordinates
+                            )
+                        )
+                    )
+                }
+
+                //------------------------------
+                // Destination Location
+                //------------------------------
+
+                if (
+                    destinationLatitude != null &&
+                    destinationLongitude != null
+                ) {
+
+                    val style = map.style
+
+                    val destinationSource =
+                        style?.getSourceAs<GeoJsonSource>(
+                            "destination-source"
+                        )
+
+                    destinationSource?.setGeoJson(
+                        Feature.fromGeometry(
+                            Point.fromLngLat(
+                                destinationLongitude,
+                                destinationLatitude
                             )
                         )
                     )

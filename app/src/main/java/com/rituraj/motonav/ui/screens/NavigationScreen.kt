@@ -52,49 +52,95 @@ fun NavigationScreen() {
         mutableStateOf<List<Pair<Double, Double>>>(emptyList())
     }
 
+    var destinationLatitude by remember {
+        mutableStateOf<Double?>(null)
+    }
+
+    var destinationLongitude by remember {
+        mutableStateOf<Double?>(null)
+    }
+
     val osrmRouter = remember {
         OsrmRouter()
     }
 
     val coroutineScope = rememberCoroutineScope()
 
-    var routeRequested by remember {
-        mutableStateOf(false)
-    }
+//    var routeRequested by remember {
+//        mutableStateOf(false)
+//    }
+//
+//    LaunchedEffect(latitude, longitude) {
+//
+//        if (
+//            latitude != null &&
+//            longitude != null &&
+//            !routeRequested
+//        ) {
+//
+//            routeRequested = true
+//
+//            coroutineScope.launch {
+//
+//                try {
+//
+//                    val route = osrmRouter.getRoute(
+//                        startLatitude = latitude!!,
+//                        startLongitude = longitude!!,
+//                        destinationLatitude = latitude!! + 0.01,
+//                        destinationLongitude = longitude!! + 0.01
+//                    )
+//
+//                    routePoints = route
+//
+//                    println(
+//                        "OSRM ROUTE POINTS: ${route.size}"
+//                    )
+//
+//                } catch (e: Exception) {
+//
+//                    println(
+//                        "OSRM ERROR: ${e.message}"
+//                    )
+//                }
+//            }
+//        }
+//    }
 
-    LaunchedEffect(latitude, longitude) {
+    LaunchedEffect(
+        destinationLatitude,
+        destinationLongitude,
+        latitude,
+        longitude
+    ) {
 
         if (
             latitude != null &&
             longitude != null &&
-            !routeRequested
+            destinationLatitude != null &&
+            destinationLongitude != null
         ) {
 
-            routeRequested = true
+            try {
 
-            coroutineScope.launch {
+                val route = osrmRouter.getRoute(
+                    startLatitude = latitude!!,
+                    startLongitude = longitude!!,
+                    destinationLatitude = destinationLatitude!!,
+                    destinationLongitude = destinationLongitude!!
+                )
 
-                try {
+                routePoints = route
 
-                    val route = osrmRouter.getRoute(
-                        startLatitude = latitude!!,
-                        startLongitude = longitude!!,
-                        destinationLatitude = latitude!! + 0.01,
-                        destinationLongitude = longitude!! + 0.01
-                    )
+                println(
+                    "OSRM ROUTE POINTS: ${route.size}"
+                )
 
-                    routePoints = route
+            } catch (e: Exception) {
 
-                    println(
-                        "OSRM ROUTE POINTS: ${route.size}"
-                    )
-
-                } catch (e: Exception) {
-
-                    println(
-                        "OSRM ERROR: ${e.message}"
-                    )
-                }
+                println(
+                    "OSRM ERROR: ${e.message}"
+                )
             }
         }
     }
@@ -146,6 +192,18 @@ fun NavigationScreen() {
                 latitude = latitude,
                 longitude = longitude,
                 routePoints = routePoints,
+                destinationLatitude = destinationLatitude,
+                destinationLongitude = destinationLongitude,
+                onMapTap = { tappedLatitude, tappedLongitude ->
+
+                    destinationLatitude = tappedLatitude
+                    destinationLongitude = tappedLongitude
+
+                    println(
+                        "DESTINATION: $tappedLatitude, $tappedLongitude"
+                    )
+                },
+
                 modifier = Modifier.fillMaxSize()
             )
         }
