@@ -33,6 +33,7 @@ import kotlinx.coroutines.launch
 import com.rituraj.motonav.routing.RoutePoint
 import com.rituraj.motonav.routing.RouteProgress
 import com.rituraj.motonav.routing.RouteTracker
+import androidx.compose.material3.Button
 
 @Composable
 fun NavigationScreen() {
@@ -71,6 +72,14 @@ fun NavigationScreen() {
 
     var routeProgress by remember {
         mutableStateOf<RouteProgress?>(null)
+    }
+
+    var isFollowingLocation by remember {
+        mutableStateOf(true)
+    }
+
+    var recenterRequest by remember {
+        mutableStateOf(0)
     }
 
 //    var routeRequested by remember {
@@ -227,6 +236,13 @@ fun NavigationScreen() {
                 routePoints = routePoints,
                 destinationLatitude = destinationLatitude,
                 destinationLongitude = destinationLongitude,
+
+                recenterRequest = recenterRequest,
+
+                onUserMovedMap = {
+                    isFollowingLocation = false
+                },
+
                 onMapTap = { tappedLatitude, tappedLongitude ->
 
                     destinationLatitude = tappedLatitude
@@ -239,6 +255,31 @@ fun NavigationScreen() {
 
                 modifier = Modifier.fillMaxSize()
             )
+
+            // ----------------------------------------------------------
+            // RE-CENTER BUTTON
+            // ----------------------------------------------------------
+
+            if (!isFollowingLocation) {
+
+                Button(
+                    onClick = {
+
+                        recenterRequest++
+
+                        isFollowingLocation = true
+                    },
+
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp)
+                ) {
+
+                    Text(
+                        text = "RE-CENTER"
+                    )
+                }
+            }
         }
 
         Row(

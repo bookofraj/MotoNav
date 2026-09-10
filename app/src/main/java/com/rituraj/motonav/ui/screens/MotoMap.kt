@@ -1,6 +1,7 @@
 package com.rituraj.motonav.ui.screens
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
@@ -24,12 +25,34 @@ fun MotoMap(
     routePoints: List<RoutePoint>,
     destinationLatitude: Double?,
     destinationLongitude: Double?,
+    recenterRequest: Int,
     onMapTap: (latitude: Double, longitude: Double) -> Unit,
+    onUserMovedMap: () -> Unit,
     modifier: Modifier = Modifier
 ) {
 
     val mapReference = remember {
         mutableMapOf<String, MapLibreMap>()
+    }
+
+    // --------------------------------------------------------------
+    // CAMERA STATE
+    // --------------------------------------------------------------
+
+    // Makes sure the first GPS fix centers the map only once.
+    val hasInitiallyCentered = remember {
+        mutableStateOf(false)
+    }
+
+    // Used to distinguish our own camera movements from
+    // movements caused by the user dragging the map.
+    val isProgrammaticCameraMove = remember {
+        mutableStateOf(false)
+    }
+
+    // Keeps track of the last recenter request we processed.
+    val lastHandledRecenterRequest = remember {
+        mutableStateOf(0)
     }
 
     AndroidView(
@@ -45,6 +68,10 @@ fun MotoMap(
 
                     mapReference["map"] = map
 
+                    // --------------------------------------------------
+                    // MAP TAP
+                    // --------------------------------------------------
+
                     map.addOnMapClickListener { point ->
 
                         onMapTap(
@@ -54,6 +81,34 @@ fun MotoMap(
 
                         true
                     }
+
+                    // --------------------------------------------------
+                    // CAMERA IDLE
+                    // --------------------------------------------------
+                    //
+                    // We use camera-idle instead of REASON_GESTURE
+                    // because that constant is not available in our
+                    // MapLibre version.
+                    //
+                    // If the camera movement was NOT initiated by us,
+                    // then it was a user movement.
+                    //
+
+                    map.addOnCameraIdleListener {
+
+                        if (isProgrammaticCameraMove.value) {
+
+                            isProgrammaticCameraMove.value = false
+
+                        } else {
+
+                            onUserMovedMap()
+                        }
+                    }
+
+                    // --------------------------------------------------
+                    // MAP STYLE
+                    // --------------------------------------------------
 
                     map.setStyle(
                         "https://tiles.openfreemap.org/styles/liberty"
@@ -86,7 +141,6 @@ fun MotoMap(
 
                         style.addLayer(locationLayer)
 
-
                         // --------------------------------------------------
                         // ROUTE
                         // --------------------------------------------------
@@ -115,9 +169,9 @@ fun MotoMap(
 
                         style.addLayer(routeLayer)
 
-                        //-------------------------
-                        // Destination Location
-                        //-------------------------
+                        // --------------------------------------------------
+                        // DESTINATION
+                        // --------------------------------------------------
 
                         val destinationSource = GeoJsonSource(
                             "destination-source",
@@ -163,11 +217,29 @@ fun MotoMap(
                         longitude
                     )
 
-                    map.animateCamera(
-                        CameraUpdateFactory.newLatLng(
-                            currentLocation
+                    // ------------------------------------------------------
+                    // INITIAL CENTER
+                    // ------------------------------------------------------
+                    //
+                    // Only center the map once, on the first GPS fix.
+                    //
+
+                    if (!hasInitiallyCentered.value) {
+
+                        isProgrammaticCameraMove.value = true
+
+                        map.animateCamera(
+                            CameraUpdateFactory.newLatLng(
+                                currentLocation
+                            )
                         )
-                    )
+
+                        hasInitiallyCentered.value = true
+                    }
+
+                    // ------------------------------------------------------
+                    // UPDATE LOCATION MARKER
+                    // ------------------------------------------------------
 
                     val style = map.style
 
@@ -185,7 +257,6 @@ fun MotoMap(
                         )
                     )
                 }
-
 
                 // ----------------------------------------------------------
                 // ROUTE
@@ -216,9 +287,9 @@ fun MotoMap(
                     )
                 }
 
-                //------------------------------
-                // Destination Location
-                //------------------------------
+                // ----------------------------------------------------------
+                // DESTINATION
+                // ----------------------------------------------------------
 
                 if (
                     destinationLatitude != null &&
@@ -237,6 +308,38 @@ fun MotoMap(
                             Point.fromLngLat(
                                 destinationLongitude,
                                 destinationLatitude
+                            )
+                        )
+                    )
+                }
+
+                // ----------------------------------------------------------
+                // RECENTER
+                // ----------------------------------------------------------
+                //
+                // Process each recenter request exactly ONCE.
+                //
+                // This is important because update() can run every time
+                // GPS changes.
+                //
+
+                if (
+                    recenterRequest > 0 &&
+                    recenterRequest != lastHandledRecenterRequest.value &&
+                    latitude != null &&
+                    longitude != null
+                ) {
+
+                    lastHandledRecenterRequest.value =
+                        recenterRequest
+
+                    isProgrammaticCameraMove.value = true
+
+                    map.animateCamera(
+                        CameraUpdateFactory.newLatLng(
+                            LatLng(
+                                latitude,
+                                longitude
                             )
                         )
                     )
