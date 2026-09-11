@@ -82,47 +82,6 @@ fun NavigationScreen() {
         mutableStateOf(0)
     }
 
-//    var routeRequested by remember {
-//        mutableStateOf(false)
-//    }
-//
-//    LaunchedEffect(latitude, longitude) {
-//
-//        if (
-//            latitude != null &&
-//            longitude != null &&
-//            !routeRequested
-//        ) {
-//
-//            routeRequested = true
-//
-//            coroutineScope.launch {
-//
-//                try {
-//
-//                    val route = osrmRouter.getRoute(
-//                        startLatitude = latitude!!,
-//                        startLongitude = longitude!!,
-//                        destinationLatitude = latitude!! + 0.01,
-//                        destinationLongitude = longitude!! + 0.01
-//                    )
-//
-//                    routePoints = route
-//
-//                    println(
-//                        "OSRM ROUTE POINTS: ${route.size}"
-//                    )
-//
-//                } catch (e: Exception) {
-//
-//                    println(
-//                        "OSRM ERROR: ${e.message}"
-//                    )
-//                }
-//            }
-//        }
-//    }
-
     LaunchedEffect(
         destinationLatitude,
         destinationLongitude,
@@ -254,6 +213,22 @@ fun NavigationScreen() {
                 },
 
                 modifier = Modifier.fillMaxSize()
+            )
+
+            // ----------------------------------------------------------
+            // 128 X 64 PREVIEW
+            // ----------------------------------------------------------
+
+            OledMapPreview(
+                latitude = latitude,
+                longitude = longitude,
+                routePoints = routePoints,
+                destinationLatitude = destinationLatitude,
+                destinationLongitude = destinationLongitude,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .align(Alignment.BottomCenter)
             )
 
             // ----------------------------------------------------------
