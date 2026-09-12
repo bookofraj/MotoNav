@@ -270,42 +270,68 @@ private fun convertToMonochrome(
     val width = source.width
     val height = source.height
 
-    val output =
-        Bitmap.createBitmap(
-            width,
-            height,
-            Bitmap.Config.ARGB_8888
-        )
+    val output = Bitmap.createBitmap(
+        width,
+        height,
+        Bitmap.Config.ARGB_8888
+    )
+
+    // How much darker a pixel must be than its surroundings
+    // to become black.
+    val contrastThreshold = 10.0
+
+    // Size of the local area used to calculate surrounding brightness.
+    val radius = 2
+
+    fun brightness(x: Int, y: Int): Double {
+        val pixel = source.getPixel(x, y)
+
+        val red = android.graphics.Color.red(pixel)
+        val green = android.graphics.Color.green(pixel)
+        val blue = android.graphics.Color.blue(pixel)
+
+        return 0.299 * red +
+                0.587 * green +
+                0.114 * blue
+    }
 
     for (y in 0 until height) {
-
         for (x in 0 until width) {
 
-            val pixel =
-                source.getPixel(
-                    x,
-                    y
-                )
+            val currentBrightness = brightness(x, y)
 
-            val red =
-                android.graphics.Color.red(pixel)
+            var surroundingBrightness = 0.0
+            var count = 0
 
-            val green =
-                android.graphics.Color.green(pixel)
+            for (dy in -radius..radius) {
+                for (dx in -radius..radius) {
 
-            val blue =
-                android.graphics.Color.blue(pixel)
+                    if (dx == 0 && dy == 0) continue
 
-            // Standard luminance calculation.
-            val brightness =
-                (
-                        0.299 * red +
-                                0.587 * green +
-                                0.114 * blue
-                        )
+                    val sampleX = (x + dx).coerceIn(0, width - 1)
+                    val sampleY = (y + dy).coerceIn(0, height - 1)
+
+                    surroundingBrightness += brightness(
+                        sampleX,
+                        sampleY
+                    )
+
+                    count++
+                }
+            }
+
+            surroundingBrightness /= count
+
+            /*
+             * Pixel becomes black when it is sufficiently
+             * darker than its local surroundings.
+             */
+            val isDarkFeature =
+                currentBrightness <
+                        surroundingBrightness - contrastThreshold
 
             val outputColor =
-                if (brightness < 128) {
+                if (isDarkFeature) {
                     android.graphics.Color.BLACK
                 } else {
                     android.graphics.Color.WHITE
