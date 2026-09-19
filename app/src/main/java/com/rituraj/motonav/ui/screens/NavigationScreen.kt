@@ -267,32 +267,6 @@ fun NavigationScreen() {
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-//            if (latitude != null && longitude != null) {
-//
-//                Column {
-//
-//                    Text(
-//                        text = "LAT: %.6f".format(latitude),
-//                        color = Color.White,
-//                        fontSize = 13.sp
-//                    )
-//
-//                    Text(
-//                        text = "LON: %.6f".format(longitude),
-//                        color = Color.White,
-//                        fontSize = 13.sp
-//                    )
-//                }
-//
-//            } else {
-//
-//                Text(
-//                    text = "GPS: Waiting...",
-//                    color = Color.White,
-//                    fontSize = 14.sp
-//                )
-//            }
-
             //Temporarily display the progress
             if (latitude != null && longitude != null) {
 
