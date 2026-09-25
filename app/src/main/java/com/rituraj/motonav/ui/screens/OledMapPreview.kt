@@ -112,7 +112,7 @@ fun OledMapPreview(
                     ),
 
                     PropertyFactory.lineWidth(
-                        5f
+                        2.5f
                     ),
 
                     PropertyFactory.lineOpacity(
@@ -149,7 +149,7 @@ fun OledMapPreview(
             locationLayer.setProperties(
 
                 PropertyFactory.circleRadius(
-                    5f
+                    4f
                 ),
 
                 PropertyFactory.circleColor(
@@ -198,7 +198,7 @@ fun OledMapPreview(
                 destinationLayer.setProperties(
 
                     PropertyFactory.circleRadius(
-                        6f
+                        5f
                     ),
 
                     PropertyFactory.circleColor(
