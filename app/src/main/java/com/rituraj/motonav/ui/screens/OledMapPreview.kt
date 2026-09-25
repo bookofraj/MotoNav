@@ -5,11 +5,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,21 +13,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import com.rituraj.motonav.routing.RoutePoint
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.Style
 import org.maplibre.android.snapshotter.MapSnapshotter
-import org.maplibre.geojson.Feature
-import org.maplibre.geojson.LineString
-import org.maplibre.geojson.Point
 import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
-import com.rituraj.motonav.routing.RoutePoint
+import org.maplibre.geojson.Feature
+import org.maplibre.geojson.LineString
+import org.maplibre.geojson.Point
 
 @Composable
 fun OledMapPreview(
@@ -44,7 +44,7 @@ fun OledMapPreview(
     modifier: Modifier = Modifier
 ) {
 
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
 
     var oledBitmap by remember {
         mutableStateOf<Bitmap?>(null)
@@ -64,12 +64,9 @@ fun OledMapPreview(
 
         try {
 
-            val routeCoordinates = routePoints.map {
-                Point.fromLngLat(
-                    it.longitude,
-                    it.latitude
-                )
-            }
+            // ----------------------------------------------------------
+            // BUILD MAP STYLE
+            // ----------------------------------------------------------
 
             val styleBuilder =
                 Style.Builder()
@@ -81,26 +78,46 @@ fun OledMapPreview(
             // ROUTE
             // ----------------------------------------------------------
 
-            if (routeCoordinates.size >= 2) {
+            if (routePoints.size >= 2) {
 
-                val routeSource = GeoJsonSource(
-                    "oled-route-source",
-                    Feature.fromGeometry(
-                        LineString.fromLngLats(
-                            routeCoordinates
+                val routeCoordinates =
+                    routePoints.map {
+                        Point.fromLngLat(
+                            it.longitude,
+                            it.latitude
+                        )
+                    }
+
+                val routeSource =
+                    GeoJsonSource(
+                        "oled-route-source",
+                        Feature.fromGeometry(
+                            LineString.fromLngLats(
+                                routeCoordinates
+                            )
                         )
                     )
-                )
 
-                val routeLayer = LineLayer(
-                    "oled-route-layer",
-                    "oled-route-source"
-                )
+                val routeLayer =
+                    LineLayer(
+                        "oled-route-layer",
+                        "oled-route-source"
+                    )
 
                 routeLayer.setProperties(
-                    PropertyFactory.lineColor("#000000"),
-                    PropertyFactory.lineWidth(5f),
-                    PropertyFactory.lineOpacity(1f)
+
+                    // Dark route for monochrome conversion.
+                    PropertyFactory.lineColor(
+                        "#000000"
+                    ),
+
+                    PropertyFactory.lineWidth(
+                        5f
+                    ),
+
+                    PropertyFactory.lineOpacity(
+                        1f
+                    )
                 )
 
                 styleBuilder
@@ -112,26 +129,40 @@ fun OledMapPreview(
             // CURRENT LOCATION
             // ----------------------------------------------------------
 
-            val locationSource = GeoJsonSource(
-                "oled-location-source",
-                Feature.fromGeometry(
-                    Point.fromLngLat(
-                        longitude,
-                        latitude
+            val locationSource =
+                GeoJsonSource(
+                    "oled-location-source",
+                    Feature.fromGeometry(
+                        Point.fromLngLat(
+                            longitude,
+                            latitude
+                        )
                     )
                 )
-            )
 
-            val locationLayer = CircleLayer(
-                "oled-location-layer",
-                "oled-location-source"
-            )
+            val locationLayer =
+                CircleLayer(
+                    "oled-location-layer",
+                    "oled-location-source"
+                )
 
             locationLayer.setProperties(
-                PropertyFactory.circleRadius(5f),
-                PropertyFactory.circleColor("#000000"),
-                PropertyFactory.circleStrokeWidth(2f),
-                PropertyFactory.circleStrokeColor("#FFFFFF")
+
+                PropertyFactory.circleRadius(
+                    5f
+                ),
+
+                PropertyFactory.circleColor(
+                    "#000000"
+                ),
+
+                PropertyFactory.circleStrokeWidth(
+                    2f
+                ),
+
+                PropertyFactory.circleStrokeColor(
+                    "#FFFFFF"
+                )
             )
 
             styleBuilder
@@ -147,26 +178,40 @@ fun OledMapPreview(
                 destinationLongitude != null
             ) {
 
-                val destinationSource = GeoJsonSource(
-                    "oled-destination-source",
-                    Feature.fromGeometry(
-                        Point.fromLngLat(
-                            destinationLongitude,
-                            destinationLatitude
+                val destinationSource =
+                    GeoJsonSource(
+                        "oled-destination-source",
+                        Feature.fromGeometry(
+                            Point.fromLngLat(
+                                destinationLongitude,
+                                destinationLatitude
+                            )
                         )
                     )
-                )
 
-                val destinationLayer = CircleLayer(
-                    "oled-destination-layer",
-                    "oled-destination-source"
-                )
+                val destinationLayer =
+                    CircleLayer(
+                        "oled-destination-layer",
+                        "oled-destination-source"
+                    )
 
                 destinationLayer.setProperties(
-                    PropertyFactory.circleRadius(6f),
-                    PropertyFactory.circleColor("#FFFFFF"),
-                    PropertyFactory.circleStrokeWidth(2f),
-                    PropertyFactory.circleStrokeColor("#000000")
+
+                    PropertyFactory.circleRadius(
+                        6f
+                    ),
+
+                    PropertyFactory.circleColor(
+                        "#FFFFFF"
+                    ),
+
+                    PropertyFactory.circleStrokeWidth(
+                        2f
+                    ),
+
+                    PropertyFactory.circleStrokeColor(
+                        "#000000"
+                    )
                 )
 
                 styleBuilder
@@ -175,8 +220,21 @@ fun OledMapPreview(
             }
 
             // ----------------------------------------------------------
-            // SNAPSHOT
+            // SNAPSHOT CAMERA
             // ----------------------------------------------------------
+
+            val cameraPosition =
+                CameraPosition.Builder()
+                    .target(
+                        LatLng(
+                            latitude,
+                            longitude
+                        )
+                    )
+                    .zoom(
+                        15.0
+                    )
+                    .build()
 
             val options =
                 MapSnapshotter.Options(
@@ -187,16 +245,12 @@ fun OledMapPreview(
                         styleBuilder
                     )
                     .withCameraPosition(
-                        CameraPosition.Builder()
-                            .target(
-                                LatLng(
-                                    latitude,
-                                    longitude
-                                )
-                            )
-                            .zoom(15.0)
-                            .build()
+                        cameraPosition
                     )
+
+            // ----------------------------------------------------------
+            // CREATE SNAPSHOT
+            // ----------------------------------------------------------
 
             val snapshotter =
                 MapSnapshotter(
@@ -205,10 +259,13 @@ fun OledMapPreview(
                 )
 
             snapshotter.start(
-                object : MapSnapshotter.SnapshotReadyCallback {
+
+                object :
+                    MapSnapshotter.SnapshotReadyCallback {
 
                     override fun onSnapshotReady(
-                        snapshot: org.maplibre.android.snapshotter.MapSnapshot
+                        snapshot:
+                        org.maplibre.android.snapshotter.MapSnapshot
                     ) {
 
                         oledBitmap =
@@ -222,6 +279,10 @@ fun OledMapPreview(
 
                 MapSnapshotter.ErrorHandler {
 
+                    println(
+                        "OLED SNAPSHOT ERROR"
+                    )
+
                     snapshotter.cancel()
                 }
             )
@@ -234,6 +295,10 @@ fun OledMapPreview(
         }
     }
 
+    // --------------------------------------------------------------
+    // PREVIEW
+    // --------------------------------------------------------------
+
     Box(
         modifier = modifier
             .background(Color.Black),
@@ -244,15 +309,22 @@ fun OledMapPreview(
 
             Image(
                 bitmap = bitmap.asImageBitmap(),
-                contentDescription = "128x64 OLED preview",
+
+                contentDescription =
+                    "128x64 OLED preview",
+
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(20.dp),
-                contentScale = ContentScale.FillBounds
+
+                contentScale =
+                    ContentScale.FillBounds
             )
 
         } ?: Text(
-            text = "OLED PREVIEW\nWaiting for GPS...",
+            text =
+                "OLED PREVIEW\nWaiting for GPS...",
+
             color = Color.White
         )
     }
@@ -270,25 +342,45 @@ private fun convertToMonochrome(
     val width = source.width
     val height = source.height
 
-    val output = Bitmap.createBitmap(
-        width,
-        height,
-        Bitmap.Config.ARGB_8888
-    )
+    val output =
+        Bitmap.createBitmap(
+            width,
+            height,
+            Bitmap.Config.ARGB_8888
+        )
 
-    // How much darker a pixel must be than its surroundings
+    // Local contrast required for a pixel
     // to become black.
     val contrastThreshold = 10.0
 
-    // Size of the local area used to calculate surrounding brightness.
+    // Radius of local brightness sampling.
     val radius = 2
 
-    fun brightness(x: Int, y: Int): Double {
-        val pixel = source.getPixel(x, y)
+    fun brightness(
+        x: Int,
+        y: Int
+    ): Double {
 
-        val red = android.graphics.Color.red(pixel)
-        val green = android.graphics.Color.green(pixel)
-        val blue = android.graphics.Color.blue(pixel)
+        val pixel =
+            source.getPixel(
+                x,
+                y
+            )
+
+        val red =
+            android.graphics.Color.red(
+                pixel
+            )
+
+        val green =
+            android.graphics.Color.green(
+                pixel
+            )
+
+        val blue =
+            android.graphics.Color.blue(
+                pixel
+            )
 
         return 0.299 * red +
                 0.587 * green +
@@ -296,39 +388,63 @@ private fun convertToMonochrome(
     }
 
     for (y in 0 until height) {
+
         for (x in 0 until width) {
 
-            val currentBrightness = brightness(x, y)
+            val currentBrightness =
+                brightness(
+                    x,
+                    y
+                )
 
-            var surroundingBrightness = 0.0
-            var count = 0
+            var surroundingBrightness =
+                0.0
+
+            var count =
+                0
 
             for (dy in -radius..radius) {
+
                 for (dx in -radius..radius) {
 
-                    if (dx == 0 && dy == 0) continue
+                    if (
+                        dx == 0 &&
+                        dy == 0
+                    ) {
+                        continue
+                    }
 
-                    val sampleX = (x + dx).coerceIn(0, width - 1)
-                    val sampleY = (y + dy).coerceIn(0, height - 1)
+                    val sampleX =
+                        (x + dx)
+                            .coerceIn(
+                                0,
+                                width - 1
+                            )
 
-                    surroundingBrightness += brightness(
-                        sampleX,
-                        sampleY
-                    )
+                    val sampleY =
+                        (y + dy)
+                            .coerceIn(
+                                0,
+                                height - 1
+                            )
+
+                    surroundingBrightness +=
+                        brightness(
+                            sampleX,
+                            sampleY
+                        )
 
                     count++
                 }
             }
 
-            surroundingBrightness /= count
+            surroundingBrightness /=
+                count
 
-            /*
-             * Pixel becomes black when it is sufficiently
-             * darker than its local surroundings.
-             */
             val isDarkFeature =
                 currentBrightness <
-                        surroundingBrightness - contrastThreshold
+                        surroundingBrightness -
+                        contrastThreshold
 
             val outputColor =
                 if (isDarkFeature) {
