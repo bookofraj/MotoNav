@@ -33,6 +33,9 @@ import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.LineString
 import org.maplibre.geojson.Point
+import com.rituraj.motonav.OledFrameSender
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 @Composable
 fun OledMapPreview(
@@ -43,6 +46,7 @@ fun OledMapPreview(
     destinationLongitude: Double?,
     modifier: Modifier = Modifier
 ) {
+    val coroutineScope = rememberCoroutineScope()
 
     val context = LocalContext.current
 
@@ -268,10 +272,26 @@ fun OledMapPreview(
                         org.maplibre.android.snapshotter.MapSnapshot
                     ) {
 
-                        oledBitmap =
-                            convertToMonochrome(
-                                snapshot.bitmap
-                            )
+//                        oledBitmap =
+//                            convertToMonochrome(
+//                                snapshot.bitmap
+//                            )
+                        val monochromeBitmap = convertToMonochrome(snapshot.bitmap)
+
+                        oledBitmap = monochromeBitmap
+
+                        coroutineScope.launch {
+                            try {
+                                val result = OledFrameSender.sendFrame(
+                                    bitmap = monochromeBitmap,
+                                    espIpAddress = "10.154.224.214" // Replace with your ESP8266's actual IP
+                                )
+
+                                println("OLED SEND SUCCESS: $result")
+                            } catch (e: Exception) {
+                                println("OLED SEND ERROR: ${e.message}")
+                            }
+                        }
 
                         snapshotter.cancel()
                     }
